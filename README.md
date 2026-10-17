@@ -70,6 +70,8 @@ k8s/           Namespace, MySQL StatefulSet, backend + HPA, frontend + Ingress, 
 
 ## Run it
 
+> **Full step-by-step instructions, with expected output at every step, verification and troubleshooting: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).** The commands below are the short version.
+
 ### 1. Docker Compose (quickest, runs locally)
 
 ```bash
