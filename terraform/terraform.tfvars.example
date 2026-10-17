@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is git-ignored.
+region      = "ap-south-1"
+environment = "dev"
+key_name    = "my-keypair"
+admin_cidr  = "203.0.113.10/32" # curl -s https://checkip.amazonaws.com, then add /32

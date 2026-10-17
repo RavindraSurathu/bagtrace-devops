@@ -1,0 +1,16 @@
+domain: example.com
+
+db_host: "mysql.{{ domain }}"
+db_name: bagtrace
+db_user: bagtrace
+backend_host: "backend.{{ domain }}"
+backend_port: 8080
+
+# Secrets come from vault.yml (encrypted). Create it with:
+#   ansible-vault create group_vars/all/vault.yml
+# using vault.example.yml as the template.
+mysql_root_password: "{{ vault_mysql_root_password }}"
+db_password: "{{ vault_db_password }}"
+
+app_dir: /app
+repo_root: "{{ playbook_dir }}/.."

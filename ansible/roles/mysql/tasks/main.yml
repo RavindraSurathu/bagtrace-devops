@@ -1,0 +1,63 @@
+- name: Install MySQL server and the Python driver Ansible needs
+  ansible.builtin.dnf:
+    name: [mysql-server, python3-PyMySQL]
+    state: present
+
+- name: Listen on all interfaces (security groups restrict access)
+  ansible.builtin.lineinfile:
+    path: /etc/my.cnf.d/mysql-server.cnf
+    regexp: '^bind-address'
+    line: bind-address = 0.0.0.0
+    insertafter: '^\[mysqld\]'
+  notify: Restart mysqld
+
+- name: Start and enable mysqld
+  ansible.builtin.systemd:
+    name: mysqld
+    state: started
+    enabled: true
+
+- name: Check whether the root password is already set
+  ansible.builtin.command: mysql -uroot -p{{ mysql_root_password }} -e "SELECT 1"
+  register: root_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Set the MySQL root password
+  ansible.builtin.command: mysql_secure_installation --set-root-pass {{ mysql_root_password }}
+  when: root_check.rc != 0
+  no_log: true
+
+- name: Create the application database
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  register: db_created
+
+- name: Copy schema to the server
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/app/db/schema.sql"
+    dest: /tmp/bagtrace-schema.sql
+    mode: "0600"
+
+- name: Load schema and sample data
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: import
+    target: /tmp/bagtrace-schema.sql
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  when: db_created.changed
+
+- name: Create the application user
+  community.mysql.mysql_user:
+    name: "{{ db_user }}"
+    host: "%"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:SELECT,INSERT,UPDATE,DELETE"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  no_log: true

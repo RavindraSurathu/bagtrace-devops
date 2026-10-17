@@ -1,0 +1,14 @@
+#!/bin/bash
+# Bootstraps one tier: clone the repo and run its install script from shell/.
+# Rendered by Terraform; output goes to /var/log/bagtrace-bootstrap.log
+exec > >(tee -a /var/log/bagtrace-bootstrap.log) 2>&1
+
+dnf install -y git
+rm -rf /opt/bagtrace
+git clone --depth 1 ${repo_url} /opt/bagtrace
+
+%{ for key, value in env ~}
+export ${key}='${value}'
+%{ endfor ~}
+
+bash /opt/bagtrace/shell/${script}

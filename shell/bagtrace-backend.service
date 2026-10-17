@@ -1,0 +1,18 @@
+[Unit]
+Description=BagTrace API (gunicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=bagtrace
+Group=bagtrace
+WorkingDirectory=/app
+EnvironmentFile=/etc/bagtrace.env
+ExecStart=/app/venv/bin/gunicorn --bind 0.0.0.0:8080 --workers 2 --access-logfile - wsgi:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

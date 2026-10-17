@@ -1,0 +1,55 @@
+# Run the whole 3-tier stack locally:  docker compose up -d --build
+# Then open http://localhost:8080
+name: bagtrace
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-RootPass@123}
+      MYSQL_DATABASE: bagtrace
+      MYSQL_USER: bagtrace
+      MYSQL_PASSWORD: ${DB_PASSWORD:-BagTrace@123}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./app/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-RootPass@123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [db]
+
+  backend:
+    build: ./app/backend
+    image: bagtrace-backend:local
+    environment:
+      DB_HOST: mysql
+      DB_USER: bagtrace
+      DB_PASSWORD: ${DB_PASSWORD:-BagTrace@123}
+      DB_NAME: bagtrace
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [app, db]
+    restart: unless-stopped
+
+  frontend:
+    build: ./app/frontend
+    image: bagtrace-frontend:local
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: "8080"
+    ports:
+      - "8080:80"
+    depends_on: [backend]
+    networks: [app]
+    restart: unless-stopped
+
+# The frontend cannot reach MySQL directly: only the backend joins both networks.
+networks:
+  app: {}
+  db: {}
+
+volumes:
+  mysql-data: {}

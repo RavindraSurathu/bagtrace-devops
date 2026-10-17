@@ -1,0 +1,32 @@
+# Nginx site config for the BagTrace web tier.
+# ${BACKEND_HOST} and ${BACKEND_PORT} are filled in at deploy time
+# (envsubst in shell/Ansible, or the official nginx image's template feature in Docker/K8s).
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 30s;
+    }
+
+    location = /health {
+        proxy_pass http://${BACKEND_HOST}:${BACKEND_PORT}/health;
+    }
+
+    location = /nginx-health {
+        access_log off;
+        return 200 "ok\n";
+    }
+}

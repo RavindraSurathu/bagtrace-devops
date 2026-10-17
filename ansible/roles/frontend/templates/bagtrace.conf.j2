@@ -1,0 +1,4 @@
+{# Same server block as app/frontend/nginx.conf.template, rendered by Jinja2 #}
+{{ lookup('file', repo_root + '/app/frontend/nginx.conf.template')
+   | replace('${BACKEND_HOST}', backend_host)
+   | replace('${BACKEND_PORT}', backend_port | string) }}

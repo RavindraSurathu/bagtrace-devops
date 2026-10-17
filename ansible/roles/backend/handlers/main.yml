@@ -1,0 +1,5 @@
+- name: Restart backend
+  ansible.builtin.systemd:
+    name: bagtrace-backend
+    state: restarted
+    daemon_reload: true

@@ -1,0 +1,42 @@
+- name: Install Nginx
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+
+- name: Publish dashboard files
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/app/frontend/{{ item }}"
+    dest: "/usr/share/nginx/html/{{ item }}"
+    mode: "0644"
+  loop: [index.html, app.js, styles.css]
+
+- name: Install the main Nginx config (no default server)
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/shell/nginx.conf"
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Render the BagTrace site config
+  ansible.builtin.template:
+    src: bagtrace.conf.j2
+    dest: /etc/nginx/conf.d/bagtrace.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Check the Nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Allow Nginx to connect to the backend (SELinux)
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+  when: ansible_selinux.status == "enabled"
+
+- name: Start and enable Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true

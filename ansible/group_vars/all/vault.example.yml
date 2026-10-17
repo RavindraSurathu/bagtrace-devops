@@ -1,0 +1,4 @@
+# Copy to vault.yml, set real values, then encrypt:
+#   ansible-vault encrypt group_vars/all/vault.yml
+vault_mysql_root_password: ChangeMe-Root@123
+vault_db_password: ChangeMe-App@123

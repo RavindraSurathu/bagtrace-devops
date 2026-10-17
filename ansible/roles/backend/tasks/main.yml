@@ -1,0 +1,72 @@
+- name: Install Python 3.11
+  ansible.builtin.dnf:
+    name: [python3.11, python3.11-pip]
+    state: present
+
+- name: Create the bagtrace system user
+  ansible.builtin.user:
+    name: bagtrace
+    system: true
+    home: "{{ app_dir }}"
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Create the application directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: bagtrace
+    group: bagtrace
+    mode: "0755"
+
+- name: Copy application code
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/app/backend/{{ item }}"
+    dest: "{{ app_dir }}/{{ item }}"
+    owner: bagtrace
+    group: bagtrace
+    mode: "0644"
+  loop: [app.py, bsm.py, storage.py, wsgi.py, requirements.txt]
+  notify: Restart backend
+
+- name: Install dependencies into a virtualenv
+  ansible.builtin.pip:
+    requirements: "{{ app_dir }}/requirements.txt"
+    virtualenv: "{{ app_dir }}/venv"
+    virtualenv_command: python3.11 -m venv
+  become_user: bagtrace
+  notify: Restart backend
+
+- name: Write database settings
+  ansible.builtin.template:
+    src: bagtrace.env.j2
+    dest: /etc/bagtrace.env
+    owner: root
+    group: bagtrace
+    mode: "0640"
+  notify: Restart backend
+
+- name: Install the systemd unit
+  ansible.builtin.copy:
+    src: "{{ repo_root }}/shell/bagtrace-backend.service"
+    dest: /etc/systemd/system/bagtrace-backend.service
+    mode: "0644"
+  notify: Restart backend
+
+- name: Start and enable the API
+  ansible.builtin.systemd:
+    name: bagtrace-backend
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Flush handlers so the health check sees the new version
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the API to answer
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ backend_port }}/health/live"
+  register: api
+  retries: 10
+  delay: 3
+  until: api.status == 200

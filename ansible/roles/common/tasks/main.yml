@@ -1,0 +1,10 @@
+- name: Install base packages
+  ansible.builtin.dnf:
+    name: [tar, unzip, curl, policycoreutils-python-utils]
+    state: present
+
+- name: Create log directory
+  ansible.builtin.file:
+    path: /var/log/bagtrace
+    state: directory
+    mode: "0755"

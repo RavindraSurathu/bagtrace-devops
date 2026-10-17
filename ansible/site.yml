@@ -1,0 +1,19 @@
+# Deploy all three tiers in dependency order:
+#   ansible-galaxy collection install -r requirements.yml
+#   ansible-playbook site.yml --ask-vault-pass
+# Or one tier at a time with --limit, e.g. --limit backend
+- name: Base setup on every server
+  hosts: bagtrace
+  roles: [common]
+
+- name: DB tier
+  hosts: mysql
+  roles: [mysql]
+
+- name: App tier
+  hosts: backend
+  roles: [backend]
+
+- name: Web tier
+  hosts: frontend
+  roles: [frontend]
