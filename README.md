@@ -169,4 +169,4 @@ The project structure follows the 3-tier and microservices projects (Expense, Ro
 
 ---
 
-**Ravindra Surathu** · Cloud Infrastructure & DevOps Engineer · [Portfolio](https://ravindrasurathu.github.io) · [LinkedIn](https://www.linkedin.com/in/ravindra-surathu/)
+**Ravindra Surathu** · Cloud & Infrastructure Engineer · [Portfolio](https://ravindrasurathu.github.io) · [LinkedIn](https://www.linkedin.com/in/ravindra-surathu/)
